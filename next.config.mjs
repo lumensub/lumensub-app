@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  webpack(config) {
+    // stellar-base tries the optional native `sodium-native` module and falls
+    // back to tweetnacl. Bundlers can't follow that dynamic require, so tell
+    // webpack the module isn't there and let the fallback kick in.
+    config.resolve.alias = { ...config.resolve.alias, "sodium-native": false };
+    return config;
+  },
   async headers() {
     return [
       {
