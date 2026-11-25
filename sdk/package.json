@@ -1,0 +1,27 @@
+{
+  "name": "@lumensub/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript helpers for building and reading LumenSub subscription transactions on Soroban",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@stellar/stellar-sdk": ">=13.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lumensub/lumensub-app.git",
+    "directory": "sdk"
+  }
+}
