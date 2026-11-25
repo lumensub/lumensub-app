@@ -10,11 +10,17 @@ function big(value: unknown): bigint {
 }
 
 /**
- * Unit enum variants come back from `scValToNative` as `["Active"]`; plain
- * symbols come back as `"Active"`. Accept both so a contract change in either
- * direction doesn't break the app.
+ * The contract stores the status as a u32: Trialing = 0 through Completed = 6, in
+ * the same order as SUBSCRIPTION_STATUSES. A variant name, bare or wrapped in a
+ * one-element array, is also accepted so hand-written fixtures keep working.
  */
 export function parseStatus(value: unknown): SubscriptionStatus {
+  if (typeof value === "number" || typeof value === "bigint") {
+    const index = Number(value);
+    const status = Number.isInteger(index) ? SUBSCRIPTION_STATUSES[index] : undefined;
+    if (status) return status;
+    throw new Error(`Unknown subscription status: ${String(value)}`);
+  }
   const name = Array.isArray(value) ? value[0] : value;
   if (typeof name === "string" && (SUBSCRIPTION_STATUSES as readonly string[]).includes(name)) {
     return name as SubscriptionStatus;

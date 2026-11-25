@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { decodePlan, decodeSubscription, parseStatus } from "./decode";
 
 describe("parseStatus", () => {
-  it("accepts enum vectors and bare symbols", () => {
+  it("reads the u32 the contract stores", () => {
+    expect(parseStatus(0)).toBe("Trialing");
+    expect(parseStatus(2)).toBe("PastDue");
+    expect(parseStatus(6)).toBe("Completed");
+  });
+
+  it("still accepts enum vectors and bare symbols", () => {
     expect(parseStatus(["Active"])).toBe("Active");
     expect(parseStatus("PastDue")).toBe("PastDue");
   });
@@ -11,6 +17,8 @@ describe("parseStatus", () => {
   it("throws on unknown values", () => {
     expect(() => parseStatus(["Frozen"])).toThrow(/Unknown subscription status/);
     expect(() => parseStatus(undefined)).toThrow();
+    expect(() => parseStatus(7)).toThrow(/Unknown subscription status/);
+    expect(() => parseStatus(1.5)).toThrow();
   });
 });
 
@@ -49,7 +57,7 @@ describe("decodeSubscription", () => {
       new xdr.ScMapEntry({ key: nativeToScVal("plan_id", { type: "symbol" }), val: nativeToScVal(3n, { type: "u64" }) }),
       new xdr.ScMapEntry({
         key: nativeToScVal("status", { type: "symbol" }),
-        val: xdr.ScVal.scvVec([nativeToScVal("Paused", { type: "symbol" })]),
+        val: nativeToScVal(3, { type: "u32" }),
       }),
       new xdr.ScMapEntry({ key: nativeToScVal("subscriber", { type: "symbol" }), val: nativeToScVal("GSUB", { type: "string" }) }),
     ]);
