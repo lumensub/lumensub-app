@@ -65,9 +65,9 @@ export default function DocsPage() {
       <Section id="button" title="2. Add a Subscribe with Stellar button">
         <p className="text-fg-muted">
           Paste this anywhere HTML is allowed. It&apos;s an ordinary link with inline styles, so it doesn&apos;t load
-          scripts and won&apos;t clash with your CSS. Replace the plan number with your own.
+          scripts and won&apos;t clash with your CSS. Replace the domain with wherever you host this app, and the plan number with your own.
         </p>
-        <CodeBlock label="Button HTML" code={subscribeButtonHtml("https://app.lumensub.xyz", "1")} />
+        <CodeBlock label="Button HTML" code={subscribeButtonHtml("https://your-lumensub-app.example", "1")} />
       </Section>
 
       <Section id="sdk" title="3. Build transactions with the SDK">
