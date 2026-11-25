@@ -66,7 +66,7 @@ export function WebhooksSection() {
     <Card>
       <CardHeader
         title="Webhooks"
-        description="We POST a signed JSON event to each endpoint. Verify the X-LumenSub-Signature header with your signing secret."
+        description="We POST a signed JSON event to each endpoint. Verify the LumenSub-Signature header with your signing secret."
       />
       <CardBody className="space-y-5 border-b border-border">
         {secret && <SecretReveal title="Signing secret" secret={secret} onDone={() => setSecret(null)} />}

@@ -25,11 +25,15 @@ const { returnValue: planId } = await lumensub.submit(await sign(xdr));`;
 
 const webhookExample = `import { createHmac, timingSafeEqual } from "node:crypto";
 
-export function isValidSignature(rawBody: string, header: string, secret: string) {
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(header);
-  return a.length === b.length && timingSafeEqual(a, b);
+// header is the LumenSub-Signature value, e.g. "t=1772366400,v1=6f1e0c8b..."
+export function isValidSignature(rawBody: string, header: string, secret: string, toleranceSecs = 300) {
+  const parts = Object.fromEntries(header.split(",").map((p) => p.trim().split("=")));
+  const t = Number(parts.t);
+  if (!t || Math.abs(Date.now() / 1000 - t) > toleranceSecs) return false;
+
+  const expected = createHmac("sha256", secret).update(\`\${t}.\${rawBody}\`).digest();
+  const given = Buffer.from(parts.v1 ?? "", "hex");
+  return given.length === expected.length && timingSafeEqual(given, expected);
 }`;
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -81,9 +85,12 @@ export default function DocsPage() {
 
       <Section id="webhooks" title="Webhooks">
         <p className="text-fg-muted">
-          Add an endpoint under Webhooks on the dashboard. Each delivery is a JSON POST with an{" "}
-          <code className="font-mono text-sm">X-LumenSub-Signature</code> header: a hex HMAC-SHA256 of the raw body,
-          keyed with your signing secret. Check it before trusting the payload, and compare in constant time.
+          Add an endpoint under Webhooks on the dashboard. Each delivery is a JSON POST with a{" "}
+          <code className="font-mono text-sm">LumenSub-Signature</code> header of the form{" "}
+          <code className="font-mono text-sm">t=&lt;unix time&gt;,v1=&lt;hex&gt;</code>. The{" "}
+          <code className="font-mono text-sm">v1</code> value is a hex HMAC-SHA256 of the timestamp, a dot and the raw
+          body, keyed with your signing secret. Check it against the raw bytes before parsing, reject timestamps more
+          than five minutes off, and compare in constant time.
         </p>
         <CodeBlock label="Signature check" code={webhookExample} />
         <p className="text-sm text-fg-muted">
