@@ -40,7 +40,7 @@ Then:
 - **Amounts:** token amounts stay as `bigint` in base units until they're displayed. Don't convert them to `number`.
 - **Copy:** UI strings go in `src/i18n/messages.ts` when they're shared or appear in navigation. Write them the way you'd say them to someone: short, specific, no exclamation marks.
 - **Accessibility:** every input needs a label, everything clickable has to work with a keyboard, and focus states must stay visible. The `Field`, `Button` and `Tabs` components handle most of this for you.
-- **Formatting:** Prettier defaults with a 120 character line width. Most editors will pick that up from the existing code.
+- **Formatting:** match the code around you. That means two-space indents, double quotes and lines under about 120 characters. ESLint catches the rest.
 
 ## Commit messages
 
@@ -52,4 +52,4 @@ Issues labelled `good first issue` are small and self-contained, and the descrip
 
 ## Questions
 
-Open a discussion or comment on the issue you're working on. There's no such thing as a silly question about setup.
+Comment on the issue you're working on, or open a new one. There's no such thing as a silly question about setup.
