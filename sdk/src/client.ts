@@ -10,6 +10,7 @@ import {
 } from "@stellar/stellar-sdk";
 import * as args from "./args";
 import { decodePlan, decodeSubscription } from "./decode";
+import { CONTRACT_ERRORS, contractErrorCode, type ContractErrorCode } from "./errors";
 import type { CreatePlanParams, LumenSubConfig, Plan, Subscription } from "./types";
 
 /** Ledger close time used to turn billing periods into ledger counts. */
@@ -27,10 +28,20 @@ export class LumenSubError extends Error {
   constructor(
     message: string,
     readonly detail?: unknown,
+    /** Set when the contract itself rejected the call. See CONTRACT_ERRORS. */
+    readonly code?: ContractErrorCode,
   ) {
     super(message);
     this.name = "LumenSubError";
   }
+}
+
+/** Turns a failed simulation into a LumenSubError, with a readable message for contract errors. */
+function simulationError(method: string, raw: string, detail: unknown): LumenSubError {
+  const code = contractErrorCode(raw);
+  return code
+    ? new LumenSubError(CONTRACT_ERRORS[code].message, detail, code)
+    : new LumenSubError(`${method} failed: ${raw}`, detail);
 }
 
 /**
@@ -172,8 +183,13 @@ export class LumenSubClient {
       .setTimeout(this.config.timeoutSecs ?? 300)
       .build();
 
-    const prepared = await this.server.prepareTransaction(tx);
-    return prepared.toXDR();
+    try {
+      const prepared = await this.server.prepareTransaction(tx);
+      return prepared.toXDR();
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      throw simulationError(method, raw, err);
+    }
   }
 
   /**
@@ -192,7 +208,7 @@ export class LumenSubClient {
 
     const sim = await this.server.simulateTransaction(tx);
     if (rpc.Api.isSimulationError(sim)) {
-      throw new LumenSubError(`${method} failed: ${sim.error}`, sim);
+      throw simulationError(method, sim.error, sim);
     }
     if (!rpc.Api.isSimulationSuccess(sim) || !sim.result) {
       throw new LumenSubError(`${method} returned no result`, sim);
