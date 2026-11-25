@@ -13,6 +13,9 @@ export const u64 = (value: bigint | number): xdr.ScVal => nativeToScVal(BigInt(v
 export const u32 = (value: number): xdr.ScVal => nativeToScVal(value, { type: "u32" });
 export const bool = (value: boolean): xdr.ScVal => nativeToScVal(value, { type: "bool" });
 
+/** register_merchant(merchant, payout). Calling it again changes the payout address. */
+export const registerMerchantArgs = (merchant: string, payout: string) => [address(merchant), address(payout)];
+
 export function createPlanArgs(merchant: string, params: CreatePlanParams): xdr.ScVal[] {
   if (params.amount <= 0n) throw new Error("Plan amount must be greater than zero");
   if (params.periodSecs <= 0n) throw new Error("Billing period must be greater than zero");

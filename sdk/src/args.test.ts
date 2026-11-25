@@ -9,6 +9,15 @@ const contract = StrKey.encodeContract(Buffer.alloc(32, 2));
 
 const kinds = (vals: xdr.ScVal[]) => vals.map((v) => v.switch().name);
 
+describe("registerMerchantArgs", () => {
+  it("encodes (merchant, payout) as two addresses", () => {
+    const payout = Keypair.random().publicKey();
+    const encoded = args.registerMerchantArgs(merchant, payout);
+    expect(encoded.map((v) => v.switch().name)).toEqual(["scvAddress", "scvAddress"]);
+    expect(encoded.map((v) => scValToNative(v))).toEqual([merchant, payout]);
+  });
+});
+
 describe("createPlanArgs", () => {
   it("encodes every field with the contract's integer widths", () => {
     const vals = args.createPlanArgs(merchant, {

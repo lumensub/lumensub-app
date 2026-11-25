@@ -66,6 +66,25 @@ export class LumenSubClient {
 
   // ---- write calls -------------------------------------------------------
 
+  /**
+   * A merchant must be registered before creating a plan. The payout address can
+   * be the merchant's own wallet or any other account; registering again updates it.
+   */
+  buildRegisterMerchant(merchant: string, payout: string): Promise<string> {
+    return this.build(merchant, "register_merchant", args.registerMerchantArgs(merchant, payout));
+  }
+
+  /** True once register_merchant has been called for this address. */
+  async isMerchantRegistered(merchant: string): Promise<boolean> {
+    try {
+      await this.getMerchant(merchant);
+      return true;
+    } catch (err) {
+      if (err instanceof LumenSubError && err.code === 4) return false;
+      throw err;
+    }
+  }
+
   buildCreatePlan(merchant: string, params: CreatePlanParams): Promise<string> {
     return this.build(merchant, "create_plan", args.createPlanArgs(merchant, params));
   }
