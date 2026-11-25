@@ -109,7 +109,7 @@ export class ApiClient {
 
   private async request<T>(
     path: string,
-    schema: z.ZodType<T>,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
     init?: { auth?: boolean; method?: string; body?: unknown },
   ): Promise<T>;
   private async request(
@@ -119,7 +119,7 @@ export class ApiClient {
   ): Promise<void>;
   private async request<T>(
     path: string,
-    schema: z.ZodType<T> | null,
+    schema: z.ZodType<T, z.ZodTypeDef, unknown> | null,
     init: { auth?: boolean; method?: string; body?: unknown } = {},
   ): Promise<T | void> {
     const headers: Record<string, string> = { Accept: "application/json" };
