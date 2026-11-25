@@ -12,7 +12,7 @@ const schema = z.object({
     .string()
     .regex(/^C[A-Z2-7]{55}$/, "NEXT_PUBLIC_SUBSCRIPTION_CONTRACT_ID must be a contract address")
     .optional(),
-  apiUrl: z.string().url().default("http://localhost:4000"),
+  apiUrl: z.string().url().default("http://localhost:8080"),
 });
 
 const parsed = schema.safeParse({
