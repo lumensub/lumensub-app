@@ -33,6 +33,13 @@ describe("parsePlanForm", () => {
     expect(Object.keys(result.errors).sort()).toEqual(["amount", "maxCycles", "name", "periodDays", "token", "trialDays"]);
   });
 
+  it("applies the contract's limits on trial and grace periods", () => {
+    const trial = parsePlanForm({ ...emptyPlanForm(token), name: "Pro", amount: "1", trialDays: "366" });
+    expect("errors" in trial && trial.errors.trialDays).toMatch(/365 days/);
+    const grace = parsePlanForm({ ...emptyPlanForm(token), name: "Yearly", amount: "1", periodDays: "365", graceDays: "31" });
+    expect("errors" in grace && grace.errors.graceDays).toMatch(/30 days/);
+  });
+
   it("rejects a grace period as long as the billing period", () => {
     const result = parsePlanForm({ ...emptyPlanForm(token), name: "Weekly", amount: "1", periodDays: "7", graceDays: "7" });
     expect("errors" in result && result.errors.graceDays).toMatch(/shorter/);

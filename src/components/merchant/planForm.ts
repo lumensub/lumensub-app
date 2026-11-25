@@ -62,9 +62,12 @@ export function parsePlanForm(
 
   const trial = wholeNumber(values.trialDays);
   if (trial === null) errors.trialDays = "Use a whole number of days, or 0 for no trial.";
+  // Same limits as the contract (MAX_TRIAL_SECS and MAX_GRACE_SECS in pricing.rs).
+  else if (trial > 365) errors.trialDays = "A free trial can be at most 365 days.";
 
   const grace = wholeNumber(values.graceDays);
   if (grace === null) errors.graceDays = "Use a whole number of days.";
+  else if (grace > 30) errors.graceDays = "The grace period can be at most 30 days.";
   else if (period && grace >= period) errors.graceDays = "The grace period has to be shorter than the billing period.";
 
   const cycles = wholeNumber(values.maxCycles);
