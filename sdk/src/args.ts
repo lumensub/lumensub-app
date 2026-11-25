@@ -35,7 +35,10 @@ export const setPlanActiveArgs = (merchant: string, planId: bigint, active: bool
 
 export const subscribeArgs = (subscriber: string, planId: bigint) => [address(subscriber), u64(planId)];
 
-/** pause, resume and cancel all take (subscriber, sub_id). */
+/**
+ * pause and resume take (subscriber, sub_id). cancel takes (caller, sub_id), where
+ * the caller is either the subscriber or the plan's merchant; the encoding is the same.
+ */
 export const subscriberActionArgs = (subscriber: string, subId: bigint) => [address(subscriber), u64(subId)];
 
 export const changePlanArgs = (subscriber: string, subId: bigint, newPlanId: bigint) => [
