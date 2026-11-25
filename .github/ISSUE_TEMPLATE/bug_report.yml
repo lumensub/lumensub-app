@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in the app doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Tell us what you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /pay/3
+        2. Connect Freighter on testnet
+        3. Click "Approve"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Checkout
+        - Merchant dashboard
+        - Subscriber portal
+        - SDK
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Browser, wallet and network
+      placeholder: Firefox 133, Freighter 5.x, testnet
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output or transaction hash
+      description: Leave out secret keys and API keys.
+      render: shell
