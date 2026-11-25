@@ -9,11 +9,11 @@ import { formatDateTime } from "@/lib/dates";
 import { useAsync } from "@/lib/useAsync";
 
 export function Receipts({ subscriptionId, code }: { subscriptionId: string; code?: string }) {
-  const charges = useAsync(() => api.listCharges(subscriptionId), [subscriptionId]);
+  const payments = useAsync(() => api.listPayments(subscriptionId), [subscriptionId]);
 
-  if (charges.loading) return <Skeleton className="h-16" />;
-  if (charges.error) return <p className="text-sm text-fg-muted">Payment history isn&apos;t available right now.</p>;
-  if (!charges.data?.length) return <p className="text-sm text-fg-muted">No payments yet.</p>;
+  if (payments.loading) return <Skeleton className="h-16" />;
+  if (payments.error) return <p className="text-sm text-fg-muted">Payment history isn&apos;t available right now.</p>;
+  if (!payments.data?.length) return <p className="text-sm text-fg-muted">No payments yet.</p>;
 
   return (
     <table className="w-full text-left text-sm">
@@ -29,19 +29,20 @@ export function Receipts({ subscriptionId, code }: { subscriptionId: string; cod
         </tr>
       </thead>
       <tbody className="divide-y divide-border">
-        {charges.data.map((charge) => (
-          <tr key={charge.id}>
-            <td className="py-2">{formatDateTime(charge.createdAt)}</td>
-            <td className="tabular py-2">{formatAmount(BigInt(charge.amount), code)}</td>
+        {payments.data.map((payment) => (
+          <tr key={payment.id}>
+            <td className="py-2">{formatDateTime(payment.at)}</td>
+            <td className="tabular py-2">{payment.amount === null ? "-" : formatAmount(BigInt(payment.amount), code)}</td>
             <td className="py-2">
-              <Badge tone={charge.status === "succeeded" ? "success" : charge.status === "refunded" ? "neutral" : "danger"}>
-                {charge.status}
+              <Badge tone={payment.kind === "charge" ? "success" : payment.kind === "refund" ? "neutral" : "danger"}>
+                {payment.kind === "charge" ? "Paid" : payment.kind === "refund" ? "Refunded" : "Failed"}
               </Badge>
+              <span className="ml-2 text-xs text-fg-muted">{payment.detail}</span>
             </td>
             <td className="py-2 text-right">
-              {charge.txHash && (
+              {payment.txHash && (
                 <a
-                  href={explorerTxUrl(config.network, charge.txHash)}
+                  href={explorerTxUrl(config.network, payment.txHash)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-accent hover:underline"

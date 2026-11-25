@@ -25,7 +25,7 @@ This repo is the part of LumenSub people actually see. It talks to two things: t
 
 The contract is. Plan prices, billing periods and subscription status all live on chain, and every state change is a transaction the user signs.
 
-The backend is a convenience layer. It stores what the chain can't hold cheaply, such as plan names, descriptions, webhook endpoints and API keys. It also turns contract events into the lists and charts the dashboard shows. If the backend is down, checkout still works, because `loadCheckoutPlan` reads the plan from the contract directly. The dashboard and the portal show a warning and whatever they can.
+The backend is a convenience layer. It stores what the chain can't hold cheaply, such as plan names, webhook endpoints and API keys. It also turns contract events into the lists and charts the dashboard shows. If the backend is down, checkout still works, because `loadCheckoutPlan` reads the plan from the contract directly. The dashboard and the portal show a warning and whatever they can.
 
 ## Layout
 

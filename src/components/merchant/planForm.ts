@@ -11,7 +11,6 @@ export const PERIOD_OPTIONS = [
 
 export interface PlanFormValues {
   name: string;
-  description: string;
   token: string;
   amount: string;
   periodDays: string;
@@ -22,7 +21,6 @@ export interface PlanFormValues {
 
 export const emptyPlanForm = (token: string): PlanFormValues => ({
   name: "",
-  description: "",
   token,
   amount: "",
   periodDays: "30",
@@ -44,7 +42,7 @@ function wholeNumber(value: string): number | null {
 export function parsePlanForm(
   values: PlanFormValues,
   decimals = 7,
-): { errors: PlanFormErrors } | { params: CreatePlanParams; name: string; description: string } {
+): { errors: PlanFormErrors } | { params: CreatePlanParams; name: string } {
   const errors: PlanFormErrors = {};
 
   if (!values.name.trim()) errors.name = "Give the plan a name customers will recognise.";
@@ -76,7 +74,6 @@ export function parsePlanForm(
 
   return {
     name: values.name.trim(),
-    description: values.description.trim(),
     params: {
       token: values.token.trim(),
       amount,

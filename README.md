@@ -55,7 +55,7 @@ You'll also want the [Freighter](https://www.freighter.app/) extension, set to t
 
 ## A few design decisions
 
-**The contract is the source of truth.** The backend adds names, descriptions and history, but prices and terms come from the chain. If the API is down, checkout falls back to reading the plan from the contract, so a customer can still subscribe.
+**The contract is the source of truth.** The backend adds names and history, but prices and terms come from the chain. If the API is down, checkout falls back to reading the plan from the contract, so a customer can still subscribe.
 
 **Allowances are bounded.** Checkout never asks for an unlimited approval. Fixed-length plans approve their exact total, and open-ended ones approve twelve payments. The approval also expires.
 

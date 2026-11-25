@@ -1,14 +1,15 @@
-import { z } from "zod";
+import type { z } from "zod";
 import {
   analyticsSummarySchema,
-  apiKeySchema,
-  chargeSchema,
+  apiKeyListSchema,
   createdApiKeySchema,
   createdWebhookSchema,
+  paymentsSchema,
+  planListSchema,
   planSchema,
-  revenuePointSchema,
-  subscriptionSchema,
-  webhookSchema,
+  revenueSchema,
+  subscriptionListSchema,
+  webhookListSchema,
 } from "./schemas";
 
 export class ApiError extends Error {
@@ -45,32 +46,34 @@ export class ApiClient {
     this.fetchImpl = options.fetchImpl ?? ((...args) => fetch(...args));
   }
 
-  // ---- public routes -----------------------------------------------------
+  // ---- public routes (no key) -------------------------------------------
 
   getPlan(id: string) {
-    return this.request(`/v1/plans/${encodeURIComponent(id)}`, planSchema);
+    return this.request(`/v1/public/plans/${encodeURIComponent(id)}`, planSchema);
   }
 
   listSubscriptionsFor(subscriber: string) {
-    return this.request(`/v1/subscriptions?subscriber=${encodeURIComponent(subscriber)}`, z.array(subscriptionSchema));
+    return this.request(`/v1/public/subscribers/${encodeURIComponent(subscriber)}/subscriptions`, subscriptionListSchema);
   }
 
-  listCharges(subscriptionId: string) {
-    return this.request(`/v1/charges?subscriptionId=${encodeURIComponent(subscriptionId)}`, z.array(chargeSchema));
+  listPayments(subscriptionId: string) {
+    return this.request(`/v1/public/subscriptions/${encodeURIComponent(subscriptionId)}/payments`, paymentsSchema);
   }
 
   // ---- merchant routes ---------------------------------------------------
 
   listPlans() {
-    return this.request("/v1/plans", z.array(planSchema), { auth: true });
+    return this.request("/v1/plans", planListSchema, { auth: true });
   }
 
-  savePlanMetadata(body: { id: string; name: string; description?: string }) {
-    return this.request("/v1/plans", planSchema, { auth: true, method: "POST", body });
+  /** Plans are created on chain; the backend only stores a display name next to them. */
+  setPlanName(id: string, name: string | null) {
+    return this.request(`/v1/plans/${encodeURIComponent(id)}`, planSchema, { auth: true, method: "PATCH", body: { name } });
   }
 
+  /** The first page (up to 200) of the merchant's subscriptions, newest first. */
   listMerchantSubscriptions() {
-    return this.request("/v1/merchants/me/subscriptions", z.array(subscriptionSchema), { auth: true });
+    return this.request("/v1/subscriptions?limit=200", subscriptionListSchema, { auth: true });
   }
 
   getAnalyticsSummary() {
@@ -78,23 +81,24 @@ export class ApiClient {
   }
 
   getRevenue(days = 30) {
-    return this.request(`/v1/analytics/revenue?days=${days}`, z.array(revenuePointSchema), { auth: true });
+    return this.request(`/v1/analytics/revenue?days=${days}`, revenueSchema, { auth: true });
   }
 
   listWebhooks() {
-    return this.request("/v1/webhooks", z.array(webhookSchema), { auth: true });
+    return this.request("/v1/webhook-endpoints", webhookListSchema, { auth: true });
   }
 
   createWebhook(body: { url: string; events: string[] }) {
-    return this.request("/v1/webhooks", createdWebhookSchema, { auth: true, method: "POST", body });
+    return this.request("/v1/webhook-endpoints", createdWebhookSchema, { auth: true, method: "POST", body });
   }
 
+  /** The backend disables the endpoint rather than deleting it, so its delivery history stays. */
   deleteWebhook(id: string) {
-    return this.request(`/v1/webhooks/${encodeURIComponent(id)}`, null, { auth: true, method: "DELETE" });
+    return this.request(`/v1/webhook-endpoints/${encodeURIComponent(id)}`, null, { auth: true, method: "DELETE" });
   }
 
   listApiKeys() {
-    return this.request("/v1/api-keys", z.array(apiKeySchema), { auth: true });
+    return this.request("/v1/api-keys", apiKeyListSchema, { auth: true });
   }
 
   createApiKey(body: { name: string }) {
@@ -149,8 +153,9 @@ export class ApiClient {
     if (!response.ok) {
       let message = `Request failed with status ${response.status}`;
       try {
-        const body = (await response.json()) as { message?: string; error?: string };
-        message = body.message ?? body.error ?? message;
+        // lumensub-backend errors look like { error: { code, message, details? } }.
+        const body = (await response.json()) as { error?: { message?: string } };
+        message = body.error?.message ?? message;
       } catch {
         // keep the generic message
       }

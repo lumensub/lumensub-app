@@ -39,9 +39,9 @@ export function CreatePlanForm({ onCreated }: { onCreated: (planId: string) => v
     if (!result) return;
 
     const planId = String(result.returnValue ?? "");
-    // The name and description live off-chain. If saving them fails the plan
-    // still exists, so report it rather than treating the whole thing as failed.
-    await api.savePlanMetadata({ id: planId, name: parsed.name, description: parsed.description }).catch(() => undefined);
+    // The name lives off-chain. If saving it fails the plan still exists on chain,
+    // so carry on rather than treating the whole thing as failed.
+    if (parsed.name) await api.setPlanName(planId, parsed.name).catch(() => undefined);
     setValues(emptyPlanForm(tokenChoice === CUSTOM_TOKEN ? "" : tokenChoice));
     onCreated(planId);
   }
@@ -50,12 +50,6 @@ export function CreatePlanForm({ onCreated }: { onCreated: (planId: string) => v
     <form onSubmit={submit} className="space-y-5" noValidate>
       <div className="grid gap-5 sm:grid-cols-2">
         <InputField label="Plan name" value={values.name} onChange={set("name")} error={errors.name} placeholder="Pro monthly" />
-        <InputField
-          label="Description"
-          value={values.description}
-          onChange={set("description")}
-          placeholder="Shown on the checkout page"
-        />
 
         <SelectField
           label="Asset"

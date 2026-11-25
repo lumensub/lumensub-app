@@ -5,6 +5,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Alert, Skeleton } from "@/components/ui/Feedback";
 import { Stat } from "@/components/ui/Stat";
 import { api, ApiError } from "@/lib/api";
+import { tokenLabel } from "@/lib/tokens";
 import { useAsync } from "@/lib/useAsync";
 import { RevenueChart } from "./RevenueChart";
 
@@ -12,10 +13,23 @@ function percent(rate: number): string {
   return `${(rate * 100).toFixed(1)}%`;
 }
 
+/** Amounts in different tokens can't be added, so MRR is shown per token. */
+function formatPerToken(byToken: Record<string, string>): string {
+  const entries = Object.entries(byToken);
+  if (entries.length === 0) return formatAmount(0n);
+  return entries.map(([token, value]) => formatAmount(BigInt(value), tokenLabel(token))).join(" + ");
+}
+
 export function OverviewSection() {
   const summary = useAsync(() => api.getAnalyticsSummary(), []);
   const revenue = useAsync(() => api.getRevenue(30), []);
   const offline = summary.error instanceof ApiError && summary.error.offline;
+
+  // The chart shows one token: the one with the most revenue in the window.
+  const totals = new Map<string, bigint>();
+  for (const point of revenue.data ?? []) totals.set(point.token, (totals.get(point.token) ?? 0n) + BigInt(point.revenue));
+  const chartToken = [...totals.entries()].sort((a, b) => (b[1] > a[1] ? 1 : b[1] < a[1] ? -1 : 0))[0]?.[0];
+  const chartPoints = (revenue.data ?? []).filter((point) => point.token === chartToken);
 
   return (
     <div className="space-y-6">
@@ -32,7 +46,7 @@ export function OverviewSection() {
           <>
             <Stat
               label="Monthly recurring revenue"
-              value={summary.data ? formatAmount(BigInt(summary.data.mrr)) : "-"}
+              value={summary.data ? formatPerToken(summary.data.mrrByToken) : "-"}
               detail="All active plans, normalised to 30 days"
             />
             <Stat label="Active subscriptions" value={summary.data?.activeSubscriptions ?? "-"} />
@@ -46,11 +60,14 @@ export function OverviewSection() {
       </div>
 
       <Card>
-        <CardHeader title="Revenue" description="Successful charges per day, last 30 days" />
+        <CardHeader
+          title="Revenue"
+          description={`Successful charges per day, last 30 days${chartToken && totals.size > 1 ? `, in ${tokenLabel(chartToken)}` : ""}`}
+        />
         <CardBody>
           {revenue.loading && <Skeleton className="h-64" />}
-          {!revenue.loading && revenue.data && revenue.data.length > 0 && <RevenueChart points={revenue.data} />}
-          {!revenue.loading && (!revenue.data || revenue.data.length === 0) && (
+          {!revenue.loading && chartToken && <RevenueChart points={chartPoints} code={tokenLabel(chartToken)} />}
+          {!revenue.loading && !chartToken && (
             <p className="py-16 text-center text-sm text-fg-muted">No charges yet. Revenue shows up here after the first payment.</p>
           )}
         </CardBody>
@@ -61,9 +78,14 @@ export function OverviewSection() {
           <CardHeader title="Revenue by plan" />
           <ul className="divide-y divide-border">
             {summary.data.revenueByPlan.map((row) => (
-              <li key={row.planId} className="flex items-center justify-between px-5 py-3 text-sm">
-                <span>{row.name ?? `Plan #${row.planId}`}</span>
-                <span className="tabular font-medium">{formatAmount(BigInt(row.revenue))}</span>
+              <li key={`${row.planId}-${row.token}`} className="flex items-center justify-between px-5 py-3 text-sm">
+                <span>
+                  Plan #{row.planId}
+                  <span className="ml-2 text-xs text-fg-muted">
+                    {row.charges} {row.charges === 1 ? "charge" : "charges"}
+                  </span>
+                </span>
+                <span className="tabular font-medium">{formatAmount(BigInt(row.revenue), tokenLabel(row.token))}</span>
               </li>
             ))}
           </ul>
