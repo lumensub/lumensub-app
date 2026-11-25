@@ -86,8 +86,9 @@ export class LumenSubClient {
     return this.build(subscriber, "resume", args.subscriberActionArgs(subscriber, subId));
   }
 
-  buildCancel(subscriber: string, subId: bigint): Promise<string> {
-    return this.build(subscriber, "cancel", args.subscriberActionArgs(subscriber, subId));
+  /** Either the subscriber or the plan's merchant may cancel. */
+  buildCancel(caller: string, subId: bigint): Promise<string> {
+    return this.build(caller, "cancel", args.subscriberActionArgs(caller, subId));
   }
 
   buildChangePlan(subscriber: string, subId: bigint, newPlanId: bigint): Promise<string> {
@@ -132,6 +133,26 @@ export class LumenSubClient {
 
   async isDue(subId: bigint): Promise<boolean> {
     return Boolean(scValToNative(await this.read("is_due", [args.u64(subId)])));
+  }
+
+  /** A merchant's payout address, plan count and registration time. */
+  async getMerchant(merchant: string): Promise<{ payout: string; planCount: number; registeredAt: bigint }> {
+    const raw = scValToNative(await this.read("get_merchant", [args.address(merchant)])) as Record<string, unknown>;
+    return {
+      payout: String(raw.payout),
+      planCount: Number(raw.plan_count ?? 0),
+      registeredAt: BigInt((raw.registered_at as bigint | number | undefined) ?? 0),
+    };
+  }
+
+  /** Number of plans ever created. Plan ids run from 1 to this number. */
+  async planCount(): Promise<bigint> {
+    return BigInt(scValToNative(await this.read("plan_count", [])) as bigint);
+  }
+
+  /** Number of subscriptions ever created. Subscription ids run from 1 to this number. */
+  async subscriptionCount(): Promise<bigint> {
+    return BigInt(scValToNative(await this.read("subscription_count", [])) as bigint);
   }
 
   async getConfig(): Promise<Record<string, unknown>> {
