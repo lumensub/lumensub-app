@@ -24,8 +24,8 @@ export function ApiKeyGate({ children }: { children: (signOut: () => void) => Re
   function submit(event: FormEvent) {
     event.preventDefault();
     const value = draft.trim();
-    if (!/^lsk_[A-Za-z0-9_-]{8,}$/.test(value)) {
-      setError("API keys start with lsk_ and are at least 12 characters long.");
+    if (!/^\S{12,}$/.test(value)) {
+      setError("That doesn't look like an API key. Keys are at least 12 characters with no spaces.");
       return;
     }
     writeApiKey(value);
@@ -54,7 +54,7 @@ export function ApiKeyGate({ children }: { children: (signOut: () => void) => Re
             label="API key"
             type="password"
             autoComplete="off"
-            placeholder="lsk_..."
+            placeholder="Paste your key"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             error={error}
