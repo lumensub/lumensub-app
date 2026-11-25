@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/Feedback";
 import { InputField, SelectField } from "@/components/ui/Field";
 import { useWallet } from "@/components/wallet/WalletProvider";
 import { api } from "@/lib/api";
-import { TX_STEP_LABEL, useTransaction } from "@/lib/chain";
+import { getLumenSub, TX_STEP_LABEL, useTransaction } from "@/lib/chain";
 import { defaultTokens } from "@/lib/tokens";
 import { emptyPlanForm, parsePlanForm, PERIOD_OPTIONS, type PlanFormErrors, type PlanFormValues } from "./planForm";
 
@@ -34,6 +34,16 @@ export function CreatePlanForm({ onCreated }: { onCreated: (planId: string) => v
 
     const merchant = address ?? (await connect());
     if (!merchant) return;
+
+    // create_plan fails with MerchantNotFound until the wallet is registered. First-time
+    // merchants sign once more here, with their own wallet as the payout address.
+    const registered = await getLumenSub()
+      ?.isMerchantRegistered(merchant)
+      .catch(() => true);
+    if (registered === false) {
+      const registration = await tx.run((sdk) => sdk.buildRegisterMerchant(merchant, merchant));
+      if (!registration) return;
+    }
 
     const result = await tx.run((sdk) => sdk.buildCreatePlan(merchant, parsed.params));
     if (!result) return;
@@ -117,6 +127,11 @@ export function CreatePlanForm({ onCreated }: { onCreated: (planId: string) => v
 
       {tx.error && <Alert tone="danger" title="The plan wasn't created">{tx.error}</Alert>}
       {tx.busy && <p className="text-sm text-fg-muted" role="status">{TX_STEP_LABEL[tx.step]}</p>}
+
+      <p className="text-sm text-fg-muted">
+        The first time you create a plan, Freighter asks you to sign twice: once to register this wallet as a merchant
+        (payouts go to it), then once for the plan.
+      </p>
 
       <Button type="submit" loading={tx.busy}>
         {address ? "Create plan" : "Connect wallet and create plan"}
